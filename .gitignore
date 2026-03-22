@@ -10,8 +10,15 @@ buildNumber.properties
 # https://maven.apache.org/wrapper/#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
 
-# Eclipse m2e generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
+# Eclipse 项目文件
 .classpath
+.project
+.settings/
+
+# API 密钥（绝对不能上传）
+config.properties
+credentials.json
+tokens/
+
+# 本地数据文件
+data.json
