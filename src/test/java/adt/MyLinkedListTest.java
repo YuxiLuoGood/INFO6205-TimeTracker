@@ -16,7 +16,7 @@ public class MyLinkedListTest {
         list = new MyLinkedList<>();
     }
 
-    // ── 初始状态 ─────────────────────────────────────────────
+    // Initial State
 
     @Test
     public void testInitiallyEmpty() {
@@ -24,7 +24,7 @@ public class MyLinkedListTest {
         assertEquals(0, list.size());
     }
 
-    // ── addLast ──────────────────────────────────────────────
+    // addLast
 
     @Test
     public void testAddLastSingleElement() {
@@ -52,7 +52,7 @@ public class MyLinkedListTest {
         assertEquals("entry3", result.get(2));
     }
 
-    // ── removeIf ─────────────────────────────────────────────
+    // removeIf
 
     @Test
     public void testRemoveIfMatchingElement() {
@@ -67,7 +67,7 @@ public class MyLinkedListTest {
     public void testRemoveIfMultipleMatches() {
         list.addLast("entry1");
         list.addLast("entry2");
-        list.addLast("entry1"); // 重复
+        list.addLast("entry1");
         list.removeIf(e -> e.equals("entry1"));
         assertEquals(1, list.size());
         assertEquals("entry2", list.toList().get(0));
@@ -77,7 +77,7 @@ public class MyLinkedListTest {
     public void testRemoveIfNoMatch() {
         list.addLast("entry1");
         list.addLast("entry2");
-        list.removeIf(e -> e.equals("entry99")); // 不存在
+        list.removeIf(e -> e.equals("entry99"));
         assertEquals(2, list.size());
     }
 
@@ -85,19 +85,19 @@ public class MyLinkedListTest {
     public void testRemoveIfAllElements() {
         list.addLast("entry1");
         list.addLast("entry2");
-        list.removeIf(e -> true); // 全删
+        list.removeIf(e -> true);
         assertEquals(0, list.size());
         assertTrue(list.isEmpty());
     }
 
     @Test
     public void testRemoveIfFromEmptyList() {
-        // 空链表删除不应报错
+        // removing from an empty list should not throw
         assertDoesNotThrow(() -> list.removeIf(e -> true));
         assertEquals(0, list.size());
     }
 
-    // ── editIf ───────────────────────────────────────────────
+    // editIf
 
     @Test
     public void testEditIfMatchingElement() {
@@ -107,28 +107,27 @@ public class MyLinkedListTest {
         List<String> result = list.toList();
         assertTrue(result.contains("entryUpdated"));
         assertFalse(result.contains("entry1"));
-        assertEquals(2, list.size()); // size 不变
+        assertEquals(2, list.size());
     }
 
     @Test
     public void testEditIfOnlyFirstMatchIsEdited() {
         list.addLast("entry1");
-        list.addLast("entry1"); // 重复，只改第一条
+        list.addLast("entry1");
         list.editIf(e -> e.equals("entry1"), "entryUpdated");
         List<String> result = list.toList();
         assertEquals("entryUpdated", result.get(0));
-        assertEquals("entry1", result.get(1)); // 第二条不变
+        assertEquals("entry1", result.get(1));
     }
 
     @Test
     public void testEditIfNoMatch() {
         list.addLast("entry1");
-        list.editIf(e -> e.equals("entry99"), "entryUpdated"); // 不存在
-        assertEquals("entry1", list.toList().get(0)); // 原数据不变
+        list.editIf(e -> e.equals("entry99"), "entryUpdated");
+        assertEquals("entry1", list.toList().get(0));
     }
 
-    // ── toList ───────────────────────────────────────────────
-
+    // toList
     @Test
     public void testToListEmptyList() {
         assertTrue(list.toList().isEmpty());
@@ -144,7 +143,7 @@ public class MyLinkedListTest {
         assertTrue(result.contains("entry2"));
     }
 
-    // ── isEmpty & size ───────────────────────────────────────
+    // isEmpty & size
 
     @Test
     public void testIsEmptyAfterRemoveAll() {
