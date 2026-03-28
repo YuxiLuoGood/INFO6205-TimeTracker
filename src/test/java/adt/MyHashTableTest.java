@@ -16,7 +16,7 @@ public class MyHashTableTest {
         table = new MyHashTable<>();
     }
 
-    // ── 初始状态 ─────────────────────────────────────────────
+    // Initial State
 
     @Test
     public void testInitiallyEmpty() {
@@ -46,9 +46,9 @@ public class MyHashTableTest {
     @Test
     public void testPutUpdatesExistingKey() {
         table.put("2026-03-22", 120);
-        table.put("2026-03-22", 200); // 更新同一个 key
+        table.put("2026-03-22", 200);
         assertEquals(200, table.get("2026-03-22"));
-        assertEquals(1, table.size()); // size 不变
+        assertEquals(1, table.size());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class MyHashTableTest {
         assertNull(table.get("2026-01-01"));
     }
 
-    // ── remove ───────────────────────────────────────────────
+    // remove
 
     @Test
     public void testRemove() {
@@ -69,7 +69,7 @@ public class MyHashTableTest {
     @Test
     public void testRemoveNonExistentKeyDoesNothing() {
         table.put("2026-03-22", 120);
-        table.remove("9999-99-99"); // 不存在的 key
+        table.remove("9999-99-99");
         assertEquals(1, table.size());
     }
 
@@ -83,7 +83,7 @@ public class MyHashTableTest {
         assertEquals(1, table.size());
     }
 
-    // ── containsKey ──────────────────────────────────────────
+    // containsKey
 
     @Test
     public void testContainsKey() {
@@ -92,7 +92,7 @@ public class MyHashTableTest {
         assertFalse(table.containsKey("2026-01-01"));
     }
 
-    // ── keySet ───────────────────────────────────────────────
+    // keySet
 
     @Test
     public void testKeySet() {
@@ -109,11 +109,11 @@ public class MyHashTableTest {
         assertTrue(table.keySet().isEmpty());
     }
 
-    // ── resize（大量插入触发扩容）────────────────────────────
+    // resize
 
     @Test
     public void testResizeKeepsAllEntries() {
-        // 插入 20 条，超过默认容量 16 * 0.75 = 12，触发 resize
+        // insert 20 entries, exceeding default capacity 16 * 0.75 = 12, triggering resize
         for (int i = 0; i < 20; i++) {
             table.put("2026-03-" + String.format("%02d", i + 1), i * 10);
         }
@@ -123,7 +123,7 @@ public class MyHashTableTest {
         }
     }
 
-    // ── isEmpty ──────────────────────────────────────────────
+    // isEmpty
 
     @Test
     public void testIsEmptyAfterRemoveAll() {
