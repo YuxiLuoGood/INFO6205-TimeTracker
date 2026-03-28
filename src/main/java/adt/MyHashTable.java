@@ -3,14 +3,9 @@ package adt;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * MyHashTable — 哈希表，以日期字符串为 key，存每天的时长汇总
- * 冲突处理：链地址法（Separate Chaining）
- * 成员 A 负责实现
- */
 public class MyHashTable<K, V> {
 
-    // ── 链地址法：每个桶是一条链 ────────────────────────────
+    // Separate Chaining: each bucket is a linked chain
     private static class Entry<K, V> {
         K key;
         V value;
@@ -22,28 +17,28 @@ public class MyHashTable<K, V> {
         }
     }
 
-    // ── 常量 & 字段 ──────────────────────────────────────────
+    // Constants & Fields
     private static final int    DEFAULT_CAPACITY   = 16;
     private static final double LOAD_FACTOR_LIMIT  = 0.75;
 
     private Entry<K, V>[] buckets;
     private int size;
 
-    // ── 构造 ────────────────────────────────────────────────
+    // Constructor
     @SuppressWarnings("unchecked")
     public MyHashTable() {
         buckets = new Entry[DEFAULT_CAPACITY];
         size    = 0;
     }
 
-    // ── 私有工具 ─────────────────────────────────────────────
+    // Private Helpers
 
-    /** 把 hashCode 映射到桶索引，确保非负 */
+    // Maps hashCode to a non-negative bucket index
     private int index(K key) {
         return (key.hashCode() & 0x7fffffff) % buckets.length;
     }
 
-    /** 当负载因子超过阈值时，扩容为原来的两倍并 rehash */
+    // Doubles the capacity and rehashes all entries when load factor exceeds threshold
     @SuppressWarnings("unchecked")
     private void resize() {
         Entry<K, V>[] old = buckets;
@@ -58,19 +53,14 @@ public class MyHashTable<K, V> {
         }
     }
 
-    // ── 核心方法 ─────────────────────────────────────────────
-
-    /**
-     * 插入或更新键值对，平均 O(1)
-     * 对应场景：每次 Stop 后更新当天汇总，key = "2026-03-22"
-     */
+    // Inserts or updates a key-value pair
     public void put(K key, V value) {
         if ((double) size / buckets.length >= LOAD_FACTOR_LIMIT) {
             resize();
         }
         int i = index(key);
         Entry<K, V> cur = buckets[i];
-        // 链中已有该 key → 更新
+        // Key already exists in chain → update value
         while (cur != null) {
             if (cur.key.equals(key)) {
                 cur.value = value;
@@ -78,17 +68,14 @@ public class MyHashTable<K, V> {
             }
             cur = cur.next;
         }
-        // 链中没有 → 头插
+        // Key not found → insert at head
         Entry<K, V> node = new Entry<>(key, value);
         node.next  = buckets[i];
         buckets[i] = node;
         size++;
     }
 
-    /**
-     * 按 key 查询，平均 O(1)；不存在返回 null
-     * 对应场景：查看某天数据、AI 分析取最近 7 天
-     */
+    // Retrieves value by key, returns null if not found
     public V get(K key) {
         int i = index(key);
         Entry<K, V> cur = buckets[i];
@@ -99,9 +86,7 @@ public class MyHashTable<K, V> {
         return null;
     }
 
-    /**
-     * 删除指定 key，平均 O(1)
-     */
+    // Removes the entry with the given key
     public void remove(K key) {
         int i = index(key);
         Entry<K, V> cur  = buckets[i];
@@ -118,10 +103,8 @@ public class MyHashTable<K, V> {
         }
     }
 
-    /**
-     * 返回所有 key 的列表
-     * 对应场景：生成报告时获取所有有记录的日期
-     */
+    // Returns a list of all keys
+    // retrieve all recorded dates when generating a report
     public List<K> keySet() {
         List<K> keys = new ArrayList<>();
         for (Entry<K, V> head : buckets) {
@@ -134,17 +117,17 @@ public class MyHashTable<K, V> {
         return keys;
     }
 
-    /** 是否包含某个 key */
+    // Returns true if the given key exists in the table
     public boolean containsKey(K key) {
         return get(key) != null;
     }
 
-    /** 当前存储的键值对数量 */
+    // Returns the number of key-value pairs stored
     public int size() {
         return size;
     }
 
-    /** 是否为空 */
+    // Returns true if the table is empty
     public boolean isEmpty() {
         return size == 0;
     }
