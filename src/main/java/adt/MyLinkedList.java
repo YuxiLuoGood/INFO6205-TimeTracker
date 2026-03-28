@@ -4,13 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * MyLinkedList — 双向链表，存储计时记录 (TimeEntry)
- * 成员 A 负责实现
- */
+// MyLinkedList — Doubly linked list for storing time entries (TimeEntry)
 public class MyLinkedList<T> {
 
-    // ── 内部节点类 ──────────────────────────────────────────
+    // Inner Node Class
     private static class Node<T> {
         T data;
         Node<T> prev;
@@ -21,12 +18,12 @@ public class MyLinkedList<T> {
         }
     }
 
-    // ── 字段 ────────────────────────────────────────────────
+    // Fields
     private Node<T> head;   // 哨兵头节点（dummy）
     private Node<T> tail;   // 哨兵尾节点（dummy）
     private int size;
 
-    // ── 构造 ────────────────────────────────────────────────
+    // Constructor
     public MyLinkedList() {
         head = new Node<>(null);
         tail = new Node<>(null);
@@ -35,12 +32,10 @@ public class MyLinkedList<T> {
         size = 0;
     }
 
-    // ── 核心方法 ─────────────────────────────────────────────
+    // Core Methods
 
-    /**
-     * 在链表末尾追加一条记录，O(1)
-     * 对应场景：用户点 Stop 时追加新 TimeEntry
-     */
+    // Appends a new entry to the end of the list
+    // called when the user clicks Stop to add a new TimeEntry
     public void addLast(T entry) {
         Node<T> node = new Node<>(entry);
         node.prev = tail.prev;
@@ -50,10 +45,7 @@ public class MyLinkedList<T> {
         size++;
     }
 
-    /**
-     * 删除所有满足条件的节点，O(n)
-     * 对应场景：用户删除某条历史记录
-     */
+    // Removes all nodes that satisfy the given condition
     public void removeIf(Predicate<T> condition) {
         Node<T> cur = head.next;
         while (cur != tail) {
@@ -67,10 +59,8 @@ public class MyLinkedList<T> {
         }
     }
 
-    /**
-     * 修改第一条满足条件的节点，O(n)
-     * 对应场景：用户编辑某条记录的时长
-     */
+    // Updates the first node that satisfies the given condition
+    // Called when the user edits the duration of a record
     public void editIf(Predicate<T> condition, T newItem) {
         Node<T> cur = head.next;
         while (cur != tail) {
@@ -82,10 +72,8 @@ public class MyLinkedList<T> {
         }
     }
 
-    /**
-     * 返回所有记录的列表，O(n)
-     * 对应场景：历史记录面板渲染
-     */
+    // Returns all entries as a list, O(n)
+    // Called when rendering the history panel
     public List<T> toList() {
         List<T> result = new ArrayList<>();
         Node<T> cur = head.next;
@@ -96,12 +84,12 @@ public class MyLinkedList<T> {
         return result;
     }
 
-    /** 返回链表中记录的数量 */
+    // Returns the number of entries in the list
     public int size() {
         return size;
     }
 
-    /** 链表是否为空 */
+    // Returns true if the list is empty
     public boolean isEmpty() {
         return size == 0;
     }
