@@ -1,11 +1,10 @@
 package adt;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-public class MyHashTable<K, V> {
+public class MyHashTable<K, V> implements HashTableInterface<K, V> {
 
-    // Separate Chaining: each bucket is a linked chain
     private static class Entry<K, V> {
         K key;
         V value;
@@ -17,28 +16,22 @@ public class MyHashTable<K, V> {
         }
     }
 
-    // Constants & Fields
-    private static final int    DEFAULT_CAPACITY   = 16;
-    private static final double LOAD_FACTOR_LIMIT  = 0.75;
+    private static final int    DEFAULT_CAPACITY  = 16;
+    private static final double LOAD_FACTOR_LIMIT = 0.75;
 
     private Entry<K, V>[] buckets;
     private int size;
 
-    // Constructor
     @SuppressWarnings("unchecked")
     public MyHashTable() {
         buckets = new Entry[DEFAULT_CAPACITY];
         size    = 0;
     }
 
-    // Private Helpers
-
-    // Maps hashCode to a non-negative bucket index
     private int index(K key) {
         return (key.hashCode() & 0x7fffffff) % buckets.length;
     }
 
-    // Doubles the capacity and rehashes all entries when load factor exceeds threshold
     @SuppressWarnings("unchecked")
     private void resize() {
         Entry<K, V>[] old = buckets;
@@ -53,32 +46,24 @@ public class MyHashTable<K, V> {
         }
     }
 
-    // Inserts or updates a key-value pair
+    @Override
     public void put(K key, V value) {
-        if ((double) size / buckets.length >= LOAD_FACTOR_LIMIT) {
-            resize();
-        }
+        if ((double) size / buckets.length >= LOAD_FACTOR_LIMIT) resize();
         int i = index(key);
         Entry<K, V> cur = buckets[i];
-        // Key already exists in chain → update value
         while (cur != null) {
-            if (cur.key.equals(key)) {
-                cur.value = value;
-                return;
-            }
+            if (cur.key.equals(key)) { cur.value = value; return; }
             cur = cur.next;
         }
-        // Key not found → insert at head
         Entry<K, V> node = new Entry<>(key, value);
         node.next  = buckets[i];
         buckets[i] = node;
         size++;
     }
 
-    // Retrieves value by key, returns null if not found
+    @Override
     public V get(K key) {
-        int i = index(key);
-        Entry<K, V> cur = buckets[i];
+        Entry<K, V> cur = buckets[index(key)];
         while (cur != null) {
             if (cur.key.equals(key)) return cur.value;
             cur = cur.next;
@@ -86,27 +71,33 @@ public class MyHashTable<K, V> {
         return null;
     }
 
-    // Removes the entry with the given key
-    public void remove(K key) {
+    @Override
+    public boolean containsKey(K key) {
+        return get(key) != null;
+    }
+
+    /** 删除指定 key，返回是否成功，O(1) 平均 */
+    @Override
+    public boolean remove(K key) {
         int i = index(key);
-        Entry<K, V> cur  = buckets[i];
-        Entry<K, V> prev = null;
+        Entry<K, V> cur = buckets[i], prev = null;
         while (cur != null) {
             if (cur.key.equals(key)) {
                 if (prev == null) buckets[i] = cur.next;
-                else              prev.next  = cur.next;
+                else prev.next = cur.next;
                 size--;
-                return;
+                return true;
             }
             prev = cur;
             cur  = cur.next;
         }
+        return false;
     }
 
-    // Returns a list of all keys
-    // retrieve all recorded dates when generating a report
-    public List<K> keySet() {
-        List<K> keys = new ArrayList<>();
+    /** 返回所有 key 的集合，用于遍历所有日期 */
+    @Override
+    public Set<K> keySet() {
+        Set<K> keys = new HashSet<>();
         for (Entry<K, V> head : buckets) {
             Entry<K, V> cur = head;
             while (cur != null) {
@@ -117,18 +108,9 @@ public class MyHashTable<K, V> {
         return keys;
     }
 
-    // Returns true if the given key exists in the table
-    public boolean containsKey(K key) {
-        return get(key) != null;
-    }
+    @Override
+    public int size() { return size; }
 
-    // Returns the number of key-value pairs stored
-    public int size() {
-        return size;
-    }
-
-    // Returns true if the table is empty
-    public boolean isEmpty() {
-        return size == 0;
-    }
+    @Override
+    public boolean isEmpty() { return size == 0; }
 }

@@ -1,11 +1,13 @@
 package adt;
 
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class MyHashTableTest {
 
@@ -16,15 +18,11 @@ public class MyHashTableTest {
         table = new MyHashTable<>();
     }
 
-    // Initial State
-
     @Test
     public void testInitiallyEmpty() {
         assertTrue(table.isEmpty());
         assertEquals(0, table.size());
     }
-
-    // ── put & get ────────────────────────────────────────────
 
     @Test
     public void testPutAndGet() {
@@ -56,8 +54,6 @@ public class MyHashTableTest {
         assertNull(table.get("2026-01-01"));
     }
 
-    // remove
-
     @Test
     public void testRemove() {
         table.put("2026-03-22", 120);
@@ -67,9 +63,10 @@ public class MyHashTableTest {
     }
 
     @Test
-    public void testRemoveNonExistentKeyDoesNothing() {
+    public void testRemoveNonExistentKeyReturnsFalse() {
         table.put("2026-03-22", 120);
-        table.remove("9999-99-99");
+        boolean result = table.remove("9999-99-99");
+        assertFalse(result);
         assertEquals(1, table.size());
     }
 
@@ -83,8 +80,6 @@ public class MyHashTableTest {
         assertEquals(1, table.size());
     }
 
-    // containsKey
-
     @Test
     public void testContainsKey() {
         table.put("2026-03-22", 120);
@@ -92,13 +87,11 @@ public class MyHashTableTest {
         assertFalse(table.containsKey("2026-01-01"));
     }
 
-    // keySet
-
     @Test
     public void testKeySet() {
         table.put("2026-03-22", 120);
         table.put("2026-03-23", 90);
-        List<String> keys = table.keySet();
+        Set<String> keys = table.keySet();  // 改为 Set<String>
         assertEquals(2, keys.size());
         assertTrue(keys.contains("2026-03-22"));
         assertTrue(keys.contains("2026-03-23"));
@@ -109,11 +102,8 @@ public class MyHashTableTest {
         assertTrue(table.keySet().isEmpty());
     }
 
-    // resize
-
     @Test
     public void testResizeKeepsAllEntries() {
-        // insert 20 entries, exceeding default capacity 16 * 0.75 = 12, triggering resize
         for (int i = 0; i < 20; i++) {
             table.put("2026-03-" + String.format("%02d", i + 1), i * 10);
         }
@@ -122,8 +112,6 @@ public class MyHashTableTest {
             assertEquals(i * 10, table.get("2026-03-" + String.format("%02d", i + 1)));
         }
     }
-
-    // isEmpty
 
     @Test
     public void testIsEmptyAfterRemoveAll() {
