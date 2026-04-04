@@ -22,7 +22,6 @@ public class MyBag<T> implements BagInterface<T>, Iterable<T> {
         size = 0;
     }
 
-    /** 添加元素，O(1) 头插 */
     @Override
     public void add(T item) {
         Node<T> node = new Node<>(item);
@@ -31,7 +30,6 @@ public class MyBag<T> implements BagInterface<T>, Iterable<T> {
         size++;
     }
 
-    /** 检查是否包含某元素，O(n) */
     @Override
     public boolean contains(T item) {
         Node<T> cur = head;
@@ -42,11 +40,6 @@ public class MyBag<T> implements BagInterface<T>, Iterable<T> {
         return false;
     }
 
-    /**
-     * 按项目名检查是否已存在，O(n)
-     * 依赖 Project.toString() 返回 name
-     * 新建项目前调用，防止重名
-     */
     public boolean containsProject(String name) {
         Node<T> cur = head;
         while (cur != null) {
@@ -56,7 +49,6 @@ public class MyBag<T> implements BagInterface<T>, Iterable<T> {
         return false;
     }
 
-    /** 删除第一个匹配的元素，返回是否成功，O(n) */
     @Override
     public boolean remove(T item) {
         Node<T> cur = head, prev = null;
@@ -79,7 +71,6 @@ public class MyBag<T> implements BagInterface<T>, Iterable<T> {
     @Override
     public boolean isEmpty() { return size == 0; }
 
-    /** 转为数组，供 GUI 下拉列表渲染，O(n) */
     @Override
     public Object[] toArray() {
         Object[] arr = new Object[size];
@@ -91,7 +82,6 @@ public class MyBag<T> implements BagInterface<T>, Iterable<T> {
         return arr;
     }
 
-    /** 支持 for-each 遍历 */
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {
