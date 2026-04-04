@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-// MyLinkedList — Doubly linked list for storing time entries (TimeEntry)
-public class MyLinkedList<T> {
+public class MyLinkedList<T> implements ListInterface<T> {
 
-    // Inner Node Class
     private static class Node<T> {
         T data;
         Node<T> prev;
@@ -18,12 +16,10 @@ public class MyLinkedList<T> {
         }
     }
 
-    // Fields
-    private Node<T> head;   // 哨兵头节点（dummy）
-    private Node<T> tail;   // 哨兵尾节点（dummy）
+    private final Node<T> head; // 哨兵头节点
+    private final Node<T> tail; // 哨兵尾节点
     private int size;
 
-    // Constructor
     public MyLinkedList() {
         head = new Node<>(null);
         tail = new Node<>(null);
@@ -32,12 +28,10 @@ public class MyLinkedList<T> {
         size = 0;
     }
 
-    // Core Methods
-
-    // Appends a new entry to the end of the list
-    // called when the user clicks Stop to add a new TimeEntry
-    public void addLast(T entry) {
-        Node<T> node = new Node<>(entry);
+    /** 在末尾追加，O(1) */
+    @Override
+    public void addLast(T item) {
+        Node<T> node = new Node<>(item);
         node.prev = tail.prev;
         node.next = tail;
         tail.prev.next = node;
@@ -45,8 +39,10 @@ public class MyLinkedList<T> {
         size++;
     }
 
-    // Removes all nodes that satisfy the given condition
-    public void removeIf(Predicate<T> condition) {
+    /** 删除所有满足条件的节点，返回是否至少删除了一个，O(n) */
+    @Override
+    public boolean removeIf(Predicate<T> condition) {
+        boolean removed = false;
         Node<T> cur = head.next;
         while (cur != tail) {
             Node<T> next = cur.next;
@@ -54,26 +50,40 @@ public class MyLinkedList<T> {
                 cur.prev.next = cur.next;
                 cur.next.prev = cur.prev;
                 size--;
+                removed = true;
             }
             cur = next;
         }
+        return removed;
     }
 
-    // Updates the first node that satisfies the given condition
-    // Called when the user edits the duration of a record
-    public void editIf(Predicate<T> condition, T newItem) {
+    /** 更新第一个满足条件的节点，返回是否成功，O(n) */
+    @Override
+    public boolean editIf(Predicate<T> condition, T newItem) {
         Node<T> cur = head.next;
         while (cur != tail) {
             if (condition.test(cur.data)) {
                 cur.data = newItem;
-                return;
+                return true;
             }
             cur = cur.next;
         }
+        return false;
     }
 
-    // Returns all entries as a list, O(n)
-    // Called when rendering the history panel
+    /** 查找第一个满足条件的元素，找不到返回 null，O(n) */
+    @Override
+    public T find(Predicate<T> condition) {
+        Node<T> cur = head.next;
+        while (cur != tail) {
+            if (condition.test(cur.data)) return cur.data;
+            cur = cur.next;
+        }
+        return null;
+    }
+
+    /** 转为普通 List，供 UI 渲染，O(n) */
+    @Override
     public List<T> toList() {
         List<T> result = new ArrayList<>();
         Node<T> cur = head.next;
@@ -84,13 +94,9 @@ public class MyLinkedList<T> {
         return result;
     }
 
-    // Returns the number of entries in the list
-    public int size() {
-        return size;
-    }
+    @Override
+    public int size() { return size; }
 
-    // Returns true if the list is empty
-    public boolean isEmpty() {
-        return size == 0;
-    }
+    @Override
+    public boolean isEmpty() { return size == 0; }
 }
