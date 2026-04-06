@@ -14,10 +14,10 @@ import model.TimeEntry;
 
 public class SummaryService {
 
-    private final List<Project> projects;
+    private final List<Project>                    projects;
     private final MyHashTable<String, DailySummary> dailyTable;
-    private final MyPriorityQueue<Project> rankingQueue;
-    private final MyQuickSort sorter;
+    private MyPriorityQueue<Project>               rankingQueue;
+    private final MyQuickSort                      sorter;
 
     public SummaryService(List<Project> projects) {
         this.projects     = projects;
@@ -27,12 +27,8 @@ public class SummaryService {
         this.sorter       = new MyQuickSort();
     }
 
-    // ── 每次 stop() 后调用，更新 HashTable 和 PriorityQueue ─────
+    // ── 记录新条目 ────────────────────────────────────────────
 
-    /**
-     * 记录一条新的 TimeEntry 到 dailyTable
-     * TimerService.stop() 之后由 Main/GUI 调用
-     */
     public void recordEntry(Project project, TimeEntry entry) {
         String key = entry.getDate().toString();
         DailySummary summary = dailyTable.get(key);
@@ -41,18 +37,14 @@ public class SummaryService {
             dailyTable.put(key, summary);
         }
         summary.addEntry(project.getName(), entry.getDuration());
-
-        // 更新实时排行：重新插入最新 totalDuration
         rankingQueue.insert(project);
     }
 
-    /**
-     * 补录或编辑记录后同步更新 dailyTable
-     */
+    // ── 补录或编辑后重新计算某天汇总 ─────────────────────────
+
     public void refreshDate(LocalDate date) {
         String key = date.toString();
         DailySummary summary = new DailySummary(date);
-
         for (Project p : projects) {
             for (TimeEntry e : p.getEntriesAsList()) {
                 if (e.getDate().equals(date)) {
@@ -65,39 +57,52 @@ public class SummaryService {
 
     // ── 查询 ──────────────────────────────────────────────────
 
-    /**
-     * 获取某天的汇总，O(1)
-     * 日历同步、AI prompt 构建时调用
-     */
     public DailySummary getDailySummary(LocalDate date) {
         return dailyTable.get(date.toString());
     }
 
     /**
-     * 获取实时排行 Top N（来自 PriorityQueue）
-     * GUI 每次 stop() 后刷新排行榜时调用
+     * 实时 Top N（今天）：来自 PriorityQueue
      */
     public List<Project> getTopN(int n) {
-        List<Project> top = new ArrayList<>();
+        List<Project> top  = new ArrayList<>();
         List<Project> temp = new ArrayList<>();
-
-        // 依次 extractMax 取出 top N
         int count = Math.min(n, rankingQueue.size());
         for (int i = 0; i < count; i++) {
             Project p = rankingQueue.extractMax();
             top.add(p);
             temp.add(p);
         }
-        // 取出后重新插回，保持队列完整
-        for (Project p : temp) {
-            rankingQueue.insert(p);
-        }
+        for (Project p : temp) rankingQueue.insert(p);
         return top;
     }
 
     /**
-     * 获取完整排序报告（来自 QuickSort）
-     * 导出报告或喂给 AI 时调用
+     * 历史某天 Top N：来自 HashTable
+     */
+    public List<Project> getTopNByDate(LocalDate date, int n) {
+        DailySummary summary = getDailySummary(date);
+        if (summary == null) return new ArrayList<>();
+
+        List<String[]> list = new ArrayList<>();
+        for (String name : summary.getProjectNames()) {
+            list.add(new String[]{name,
+                    String.valueOf(summary.getDurationForProject(name))});
+        }
+        list.sort((a, b) -> Long.compare(Long.parseLong(b[1]), Long.parseLong(a[1])));
+
+        List<Project> result = new ArrayList<>();
+        for (int i = 0; i < Math.min(n, list.size()); i++) {
+            String[] item = list.get(i);
+            Project p = new Project(item[0]);
+            p.setTotalDuration(Long.parseLong(item[1]));
+            result.add(p);
+        }
+        return result;
+    }
+
+    /**
+     * 完整排序报告：来自 QuickSort
      */
     public List<Project> getSortedProjects() {
         List<Project> list = new ArrayList<>(projects);
@@ -107,22 +112,20 @@ public class SummaryService {
     }
 
     /**
-     * 获取最近 N 天的每日汇总，供 AI 分析
+     * 最近 N 天汇总，供 AI 分析
      */
     public List<DailySummary> getRecentDays(int days) {
         List<DailySummary> result = new ArrayList<>();
         LocalDate today = LocalDate.now();
         for (int i = 0; i < days; i++) {
-            LocalDate date = today.minusDays(i);
-            DailySummary summary = dailyTable.get(date.toString());
+            DailySummary summary = dailyTable.get(today.minusDays(i).toString());
             if (summary != null) result.add(summary);
         }
         return result;
     }
 
     /**
-     * 程序启动时从已有 Project 数据重建 dailyTable
-     * JsonStorage.load() 之后调用
+     * 程序启动时从已有 Project 数据重建 HashTable 和 PriorityQueue
      */
     public void rebuildFromProjects() {
         for (Project p : projects) {
@@ -135,10 +138,31 @@ public class SummaryService {
                 }
                 summary.addEntry(p.getName(), e.getDuration());
             }
-            // 重建排行队列
-            if (p.getTotalDuration() > 0) {
-                rankingQueue.insert(p);
+            if (p.getTotalDuration() > 0) rankingQueue.insert(p);
+        }
+    }
+
+    /**
+     * 删除项目后重建 PriorityQueue 和所有相关日期的 DailySummary
+     */
+    public void rebuildRanking() {
+        rankingQueue = new MyPriorityQueue<>(
+                Comparator.comparingLong(Project::getTotalDuration));
+        for (Project p : projects) {
+            if (p.getTotalDuration() > 0) rankingQueue.insert(p);
+        }
+        // 重建所有日期的 DailySummary（删项目后旧数据需要清除）
+        for (String key : dailyTable.keySet()) {
+            LocalDate date = LocalDate.parse(key);
+            DailySummary summary = new DailySummary(date);
+            for (Project p : projects) {
+                for (TimeEntry e : p.getEntriesAsList()) {
+                    if (e.getDate().equals(date)) {
+                        summary.addEntry(p.getName(), e.getDuration());
+                    }
+                }
             }
+            dailyTable.put(key, summary);
         }
     }
 }

@@ -5,6 +5,9 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -29,18 +32,16 @@ public class TimerPanel extends JPanel {
     private final SummaryService summaryService;
     private final MainWindow     mainWindow;
 
-    // ── 计时器控件 ────────────────────────────────────────────
     private JComboBox<String> projectCombo;
     private JTextField        newProjectField;
     private JButton           addProjectBtn;
+    private JButton           removeProjectBtn;
     private JLabel            timerLabel;
     private JButton           startBtn;
     private JButton           stopBtn;
+    private JPanel            rankingPanel;
+    private JTextField        rankingDateField;
 
-    // ── 排行榜控件 ────────────────────────────────────────────
-    private JPanel rankingPanel;
-
-    // ── Swing Timer（每秒刷新秒表）────────────────────────────
     private javax.swing.Timer swingTimer;
 
     public TimerPanel(TimerService timerService,
@@ -56,29 +57,34 @@ public class TimerPanel extends JPanel {
         refreshProjectCombo();
     }
 
-    // ── 初始化控件 ────────────────────────────────────────────
-
     private void initComponents() {
         projectCombo    = new JComboBox<>();
         newProjectField = new JTextField(12);
         newProjectField.putClientProperty("JTextField.placeholderText", "New project name");
-        addProjectBtn   = new JButton("Add");
-        timerLabel      = new JLabel("00:00:00", SwingConstants.CENTER);
+
+        addProjectBtn    = new JButton("Add");
+        removeProjectBtn = new JButton("Remove");
+        addProjectBtn.addActionListener(e -> onAddProject());
+        removeProjectBtn.addActionListener(e -> onRemoveProject());
+
+        timerLabel = new JLabel("00:00:00", SwingConstants.CENTER);
         timerLabel.setFont(new Font("Monospaced", Font.BOLD, 42));
 
         startBtn = new JButton("Start");
         stopBtn  = new JButton("Stop");
         stopBtn.setEnabled(false);
-
         startBtn.addActionListener(e -> onStart());
         stopBtn.addActionListener(e -> onStop());
-        addProjectBtn.addActionListener(e -> onAddProject());
 
         rankingPanel = new JPanel();
         rankingPanel.setLayout(new BoxLayout(rankingPanel, BoxLayout.Y_AXIS));
-    }
 
-    // ── 布局 ──────────────────────────────────────────────────
+        rankingDateField = new JTextField(LocalDate.now().toString(), 10);
+        rankingDateField.addActionListener(e -> refreshRanking());
+        rankingDateField.addFocusListener(new FocusAdapter() {
+            @Override public void focusLost(FocusEvent e) { refreshRanking(); }
+        });
+    }
 
     private void layoutComponents() {
         setLayout(new BorderLayout(6, 6));
@@ -86,45 +92,51 @@ public class TimerPanel extends JPanel {
                 BorderFactory.createEtchedBorder(), "Timer",
                 TitledBorder.LEFT, TitledBorder.TOP));
 
-        // 顶部：项目选择 + 新建
+        // 顶部：项目选择
         JPanel topRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
         topRow.add(new JLabel("Project:"));
         topRow.add(projectCombo);
         topRow.add(newProjectField);
         topRow.add(addProjectBtn);
+        topRow.add(removeProjectBtn);
 
         // 中部：秒表 + 按钮
         JPanel centerPanel = new JPanel(new BorderLayout(4, 8));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         centerPanel.add(timerLabel, BorderLayout.CENTER);
-
         JPanel btnRow = new JPanel(new GridLayout(1, 2, 8, 0));
         btnRow.add(startBtn);
         btnRow.add(stopBtn);
         centerPanel.add(btnRow, BorderLayout.SOUTH);
 
-        // 底部：今日排行
+        // 底部：排行榜 + 日期选择
+        JButton rankTodayBtn = new JButton("Today");
+        rankTodayBtn.addActionListener(e -> {
+            rankingDateField.setText(LocalDate.now().toString());
+            refreshRanking();
+        });
+
+        JPanel rankDateRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+        rankDateRow.add(new JLabel("Date:"));
+        rankDateRow.add(rankingDateField);
+        rankDateRow.add(rankTodayBtn);
+
         JPanel rankingWrapper = new JPanel(new BorderLayout());
         rankingWrapper.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEtchedBorder(), "Today's ranking",
+                BorderFactory.createEtchedBorder(), "Ranking",
                 TitledBorder.LEFT, TitledBorder.TOP));
+        rankingWrapper.add(rankDateRow,  BorderLayout.NORTH);
         rankingWrapper.add(rankingPanel, BorderLayout.CENTER);
 
-        add(topRow,        BorderLayout.NORTH);
-        add(centerPanel,   BorderLayout.CENTER);
+        add(topRow,         BorderLayout.NORTH);
+        add(centerPanel,    BorderLayout.CENTER);
         add(rankingWrapper, BorderLayout.SOUTH);
     }
 
-    // ── Swing Timer（每秒刷新显示）───────────────────────────
-
     private void initTimer() {
-        swingTimer = new javax.swing.Timer(1000, e -> {
-            long elapsed = timerService.getElapsedSeconds();
-            timerLabel.setText(formatTime(elapsed));
-        });
+        swingTimer = new javax.swing.Timer(1000, e ->
+                timerLabel.setText(formatTime(timerService.getElapsedSeconds())));
     }
-
-    // ── 按钮事件 ──────────────────────────────────────────────
 
     private void onStart() {
         String project = (String) projectCombo.getSelectedItem();
@@ -138,6 +150,7 @@ public class TimerPanel extends JPanel {
         startBtn.setEnabled(false);
         stopBtn.setEnabled(true);
         projectCombo.setEnabled(false);
+        removeProjectBtn.setEnabled(false);
         swingTimer.start();
     }
 
@@ -148,18 +161,18 @@ public class TimerPanel extends JPanel {
         startBtn.setEnabled(true);
         stopBtn.setEnabled(false);
         projectCombo.setEnabled(true);
+        removeProjectBtn.setEnabled(true);
 
-        // 更新 SummaryService（HashTable + PriorityQueue）
         String projectName = (String) projectCombo.getSelectedItem();
         Project project = timerService.getProjects().stream()
                 .filter(p -> p.getName().equals(projectName))
                 .findFirst().orElse(null);
         if (project != null && duration > 0) {
-            model.TimeEntry last = project.getEntriesAsList()
-                    .get(project.getEntriesAsList().size() - 1);
-            summaryService.recordEntry(project, last);
+            List<model.TimeEntry> entries = project.getEntriesAsList();
+            if (!entries.isEmpty()) {
+                summaryService.recordEntry(project, entries.get(entries.size() - 1));
+            }
         }
-
         refreshRanking();
         mainWindow.refreshHistory();
     }
@@ -167,8 +180,7 @@ public class TimerPanel extends JPanel {
     private void onAddProject() {
         String name = newProjectField.getText().trim();
         if (name.isEmpty()) return;
-        if (timerService.getProjects().stream()
-                .anyMatch(p -> p.getName().equals(name))) {
+        if (timerService.getProjects().stream().anyMatch(p -> p.getName().equals(name))) {
             JOptionPane.showMessageDialog(this,
                     "Project \"" + name + "\" already exists.",
                     "Duplicate", JOptionPane.WARNING_MESSAGE);
@@ -180,7 +192,24 @@ public class TimerPanel extends JPanel {
         projectCombo.setSelectedItem(name);
     }
 
-    // ── 刷新方法 ──────────────────────────────────────────────
+    private void onRemoveProject() {
+        String selected = (String) projectCombo.getSelectedItem();
+        if (selected == null || selected.isEmpty()) return;
+        if (timerService.isRunning()) {
+            JOptionPane.showMessageDialog(this,
+                    "Stop the timer before removing a project.",
+                    "Timer running", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Remove project \"" + selected + "\" and all its records?",
+                "Confirm remove", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+        timerService.removeProject(selected);
+        summaryService.rebuildRanking();
+        refreshProjectCombo();
+        mainWindow.refreshAll();
+    }
 
     public void refreshProjectCombo() {
         String current = (String) projectCombo.getSelectedItem();
@@ -193,9 +222,20 @@ public class TimerPanel extends JPanel {
 
     public void refreshRanking() {
         rankingPanel.removeAll();
-        List<Project> top = summaryService.getTopN(5);
+
+        LocalDate date;
+        try {
+            date = LocalDate.parse(rankingDateField.getText().trim());
+        } catch (Exception ex) {
+            date = LocalDate.now();
+        }
+
+        List<Project> top = date.equals(LocalDate.now())
+                ? summaryService.getTopNByDate(LocalDate.now(), 5)
+                : summaryService.getTopNByDate(date, 5);
+
         if (top.isEmpty()) {
-            rankingPanel.add(new JLabel("  No data yet."));
+            rankingPanel.add(new JLabel("  No data for this date."));
         } else {
             long max = top.get(0).getTotalDuration();
             for (int i = 0; i < top.size(); i++) {
@@ -226,8 +266,6 @@ public class TimerPanel extends JPanel {
         rankingPanel.revalidate();
         rankingPanel.repaint();
     }
-
-    // ── 工具方法 ──────────────────────────────────────────────
 
     private String formatTime(long totalSeconds) {
         long h = totalSeconds / 3600;

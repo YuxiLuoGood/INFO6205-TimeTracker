@@ -17,13 +17,14 @@ import okhttp3.Response;
 public class AIService {
 
     private static final String API_URL   = "http://localhost:11434/api/generate";
-    private static final String MODEL     = "llama3.2"; // 可换成你本地装的模型
+    private static final String MODEL     = "llama3.2:latest";
     private final OkHttpClient client;
     private final Gson gson;
 
     public AIService() {
         this.client = new OkHttpClient.Builder()
-                .callTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .callTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(180, java.util.concurrent.TimeUnit.SECONDS)
                 .build();
         this.gson = new Gson();
     }
@@ -32,6 +33,7 @@ public class AIService {
 
     public String getSuggestions(List<DailySummary> recentDays, List<Project> sortedProjects) {
         String prompt = buildPrompt(recentDays, sortedProjects);
+        System.out.println("=== Prompt sent to Ollama ===\n" + prompt); // 调试用
         try {
             return callOllama(prompt);
         } catch (IOException e) {
@@ -77,15 +79,12 @@ public class AIService {
     // ── Ollama API 调用 ───────────────────────────────────────
 
     private String callOllama(String prompt) throws IOException {
-        JsonObject body = new JsonObject();
-        body.addProperty("model", MODEL);
-        body.addProperty("prompt", prompt);
-        body.addProperty("stream", false); // 一次性返回完整结果
+        String json = "{\"model\":\"" + MODEL + "\",\"prompt\":"
+                + gson.toJson(prompt)
+                + ",\"stream\":false}";
 
         RequestBody reqBody = RequestBody.create(
-                gson.toJson(body),
-                MediaType.get("application/json")
-        );
+                json, MediaType.get("application/json; charset=utf-8"));
 
         Request request = new Request.Builder()
                 .url(API_URL)
@@ -94,11 +93,12 @@ public class AIService {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                return "Ollama error: " + response.code() + " " + response.message();
+                String errBody = response.body() != null ? response.body().string() : "";
+                return "Ollama error: " + response.code() + " " + errBody;
             }
             String responseBody = response.body().string();
-            JsonObject json = gson.fromJson(responseBody, JsonObject.class);
-            return json.get("response").getAsString();
+            JsonObject json2 = gson.fromJson(responseBody, JsonObject.class);
+            return json2.get("response").getAsString();
         }
     }
 

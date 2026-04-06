@@ -89,6 +89,11 @@ public class MainWindow extends JFrame {
 
     // ── 面板间通信 ────────────────────────────────────────────
 
+    /** HistoryPanel 日期变化时同步到 SuggestionPanel 的 Calendar 日期框 */
+    public void syncCalendarDate(java.time.LocalDate date) {
+        if (suggestionPanel != null) suggestionPanel.setCalendarDate(date);
+    }
+
     /** TimerPanel stop() 后刷新历史记录列表 */
     public void refreshHistory() {
         historyPanel.refresh();

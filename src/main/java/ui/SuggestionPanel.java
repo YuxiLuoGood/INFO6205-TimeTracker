@@ -42,6 +42,11 @@ public class SuggestionPanel extends JPanel {
     private JButton    syncBtn;
     private JLabel     syncStatusLabel;
 
+    /** HistoryPanel 日期变化时调用，同步更新 Calendar 日期框 */
+    public void setCalendarDate(LocalDate date) {
+        if (date != null) dateField.setText(date.toString());
+    }
+
     public SuggestionPanel(AIService aiService,
                            CalendarService calendarService,
                            SummaryService summaryService) {
