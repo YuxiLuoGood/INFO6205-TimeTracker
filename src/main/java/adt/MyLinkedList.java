@@ -16,8 +16,8 @@ public class MyLinkedList<T> implements ListInterface<T> {
         }
     }
 
-    private final Node<T> head; // 哨兵头节点
-    private final Node<T> tail; // 哨兵尾节点
+    private final Node<T> head;
+    private final Node<T> tail;
     private int size;
 
     public MyLinkedList() {
@@ -28,7 +28,6 @@ public class MyLinkedList<T> implements ListInterface<T> {
         size = 0;
     }
 
-    /** 在末尾追加，O(1) */
     @Override
     public void addLast(T item) {
         Node<T> node = new Node<>(item);
@@ -39,7 +38,6 @@ public class MyLinkedList<T> implements ListInterface<T> {
         size++;
     }
 
-    /** 删除所有满足条件的节点，返回是否至少删除了一个，O(n) */
     @Override
     public boolean removeIf(Predicate<T> condition) {
         boolean removed = false;
@@ -57,7 +55,6 @@ public class MyLinkedList<T> implements ListInterface<T> {
         return removed;
     }
 
-    /** 更新第一个满足条件的节点，返回是否成功，O(n) */
     @Override
     public boolean editIf(Predicate<T> condition, T newItem) {
         Node<T> cur = head.next;
