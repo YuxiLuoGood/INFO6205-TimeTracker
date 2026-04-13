@@ -1,0 +1,99 @@
+REQUIREMENTS
+------------
+- Java 17 or above
+- Maven 3.6 or above
+- Eclipse IDE (or any IDE that supports Maven projects)
+- Ollama (for AI habit suggestions)
+
+----------------------------------------------------------------
+STEP 1 — SET UP OLLAMA (for AI suggestions)
+----------------------------------------------------------------
+1. Download and install Ollama from https://ollama.com
+2. Open a terminal and pull the model:
+
+    ollama pull llama3.2
+
+3. Start Ollama (it usually runs automatically after install):
+
+    ollama serve
+
+   Ollama must be running in the background before launching
+   the app. The AI feature connects to localhost:11434.
+   
+----------------------------------------------------------------   
+STEP 2 — SET UP GOOGLE CALENDAR (optional)
+----------------------------------------------------------------
+If you want to use the Google Calendar sync feature:
+
+1. Go to https://console.cloud.google.com
+2. Create a new project
+3. Enable the Google Calendar API
+4. Go to APIs & Services > Credentials
+5. Create an OAuth 2.0 Client ID (Desktop app)
+6. Download the credentials file
+7. Rename it to: credentials.json
+8. Place it in the project root directory
+   (same folder as pom.xml)
+
+On first run, a browser window will open asking you to
+authorise access. After authorising, a tokens/ folder will
+be created automatically — do not delete it.
+
+If you skip this step, the Calendar sync button will be
+disabled but all other features will work normally
+
+----------------------------------------------------------------
+STEP 3 — BUILD THE PROJECT
+----------------------------------------------------------------
+In the project root directory, run:
+
+    mvn clean install
+
+This downloads all dependencies and compiles the project.
+Expected output: BUILD SUCCESS
+
+
+----------------------------------------------------------------
+STEP 4 — RUN THE APPLICATION
+----------------------------------------------------------------
+Option A — From the terminal:
+
+    mvn exec:java -Dexec.mainClass="Main"
+
+Option B — From Eclipse:
+1. File > Import > Maven > Existing Maven Projects
+2. Browse to the cloned directory and click Finish
+3. Right-click the project > Maven > Update Project
+4. Open src/main/java/Main.java
+5. Right-click > Run As > Java Application
+
+----------------------------------------------------------------
+STEP 5 — USING THE APPLICATION
+----------------------------------------------------------------
+1. Add a project using the input field and "Add" button
+2. Select a project and click "Start" to begin timing
+3. Click "Stop" to save the session
+4. View history in the History panel — filter by date
+5. Add past sessions using "+ Manual entry"
+6. Click "Get suggestions" for AI habit analysis
+   (requires Ollama to be running)
+7. Enter a date and click "Sync to Google Calendar"
+   (requires credentials.json to be configured)
+8. Close the window to save all data automatically
+
+----------------------------------------------------------------
+TROUBLESHOOTING
+----------------------------------------------------------------
+"AI suggestions not working"
+  → Make sure Ollama is running: ollama serve
+  → Check model is installed: ollama list
+
+"Google Calendar sync button is greyed out"
+  → credentials.json is missing from the project root
+
+"BUILD FAILURE - dependency not found"
+  → Run: mvn dependency:resolve -U
+
+"Red errors in Eclipse after import"
+  → Right-click project > Maven > Update Project
+  → Check "Force Update" and click OK
