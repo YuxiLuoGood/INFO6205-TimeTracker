@@ -1,5 +1,17 @@
 package service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Set;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -13,15 +25,8 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
-import model.DailySummary;
 
-import java.io.*;
-import java.security.GeneralSecurityException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
+import model.DailySummary;
 
 public class CalendarService {
 
@@ -45,7 +50,7 @@ public class CalendarService {
         }
     }
 
-    // ── 主入口 ────────────────────────────────────────────────
+    // 主入口 
 
     /**
      * 把某天的时间汇总同步为一个 Google Calendar 全天事件
@@ -77,7 +82,7 @@ public class CalendarService {
         return calendarClient != null;
     }
 
-    // ── Event 构建 ────────────────────────────────────────────
+    // Event 构建
 
     private Event buildEvent(DailySummary summary) {
         LocalDate date = summary.getDate();
@@ -114,7 +119,7 @@ public class CalendarService {
                 .setEnd(new EventDateTime().setDate(end));
     }
 
-    // ── OAuth 2.0 认证 ────────────────────────────────────────
+    // OAuth 2.0 认证 
 
     private Credential authorize(NetHttpTransport transport) throws IOException {
         // 读取 credentials.json（从 Google Cloud Console 下载）
@@ -144,7 +149,7 @@ public class CalendarService {
         }
     }
 
-    // ── 工具方法 ──────────────────────────────────────────────
+    // 工具方法
 
     private String formatDuration(long totalSeconds) {
         long h = totalSeconds / 3600;

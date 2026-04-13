@@ -8,7 +8,7 @@ import java.util.List;
 public class Project {
 
     private String name;
-    private ListInterface<TimeEntry> entries;  // 用接口类型，方便以后替换
+    private ListInterface<TimeEntry> entries;  
     private long totalDuration;                // 单位：秒
 
     public Project(String name) {

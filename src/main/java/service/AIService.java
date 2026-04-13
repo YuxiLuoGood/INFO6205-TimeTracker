@@ -29,7 +29,7 @@ public class AIService {
         this.gson = new Gson();
     }
 
-    // ── 主入口 ────────────────────────────────────────────────
+    //主入口 
 
     public String getSuggestions(List<DailySummary> recentDays, List<Project> sortedProjects) {
         String prompt = buildPrompt(recentDays, sortedProjects);
@@ -41,7 +41,7 @@ public class AIService {
         }
     }
 
-    // ── Prompt 构建 ───────────────────────────────────────────
+    // Prompt 构建
 
     private String buildPrompt(List<DailySummary> recentDays, List<Project> sortedProjects) {
         StringBuilder sb = new StringBuilder();
@@ -76,7 +76,7 @@ public class AIService {
         return sb.toString();
     }
 
-    // ── Ollama API 调用 ───────────────────────────────────────
+    // Ollama API 调用
 
     private String callOllama(String prompt) throws IOException {
         String json = "{\"model\":\"" + MODEL + "\",\"prompt\":"
@@ -102,7 +102,7 @@ public class AIService {
         }
     }
 
-    // ── 工具方法 ──────────────────────────────────────────────
+    //工具方法 
 
     private String formatDuration(long totalSeconds) {
         long h = totalSeconds / 3600;
