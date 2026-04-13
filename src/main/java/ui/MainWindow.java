@@ -38,17 +38,17 @@ public class MainWindow extends JFrame {
         layoutPanels();
     }
 
-    // ── 窗口基本设置 ──────────────────────────────────────────
+    //Window Basic Settings 
 
     private void initWindow() {
         setTitle("Time Tracker");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // 关闭由 Main.java 处理
         setSize(900, 640);
         setMinimumSize(new Dimension(800, 560));
-        setLocationRelativeTo(null); // 居中显示
+        setLocationRelativeTo(null); // Center alignment
     }
 
-    // ── 初始化各面板 ──────────────────────────────────────────
+    //Initialize each panel
 
     private void initPanels() {
         timerPanel      = new TimerPanel(timerService, summaryService, this);
@@ -56,28 +56,19 @@ public class MainWindow extends JFrame {
         suggestionPanel = new SuggestionPanel(aiService, calendarService, summaryService);
     }
 
-    // ── 布局 ──────────────────────────────────────────────────
-    //
-    //  ┌─────────────────┬──────────────────────┐
-    //  │   TimerPanel    │                      │
-    //  │  (左上，计时器)  │   SuggestionPanel    │
-    //  ├─────────────────┤   (右侧，AI + 日历)   │
-    //  │  HistoryPanel   │                      │
-    //  │  (左下，历史)    │                      │
-    //  └─────────────────┴──────────────────────┘
 
     private void layoutPanels() {
         setLayout(new BorderLayout(8, 8));
         getRootPane().setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 左侧：计时器 + 历史记录，上下分割
+        // Left: Timer + History, split vertically
         JSplitPane leftSplit = new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT, timerPanel, historyPanel);
         leftSplit.setDividerLocation(320);
         leftSplit.setResizeWeight(0.5);
         leftSplit.setBorder(null);
 
-        // 左右分割
+        // Split left and right
         JSplitPane mainSplit = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT, leftSplit, suggestionPanel);
         mainSplit.setDividerLocation(520);
@@ -87,19 +78,19 @@ public class MainWindow extends JFrame {
         add(mainSplit, BorderLayout.CENTER);
     }
 
-    // ── 面板间通信 ────────────────────────────────────────────
+    // Inter-panel communication
 
-    /** HistoryPanel 日期变化时同步到 SuggestionPanel 的 Calendar 日期框 */
+    /** Synchronizes the date field in the SuggestionPanel's Calendar when the date in the HistoryPanel changes */
     public void syncCalendarDate(java.time.LocalDate date) {
         if (suggestionPanel != null) suggestionPanel.setCalendarDate(date);
     }
 
-    /** TimerPanel stop() 后刷新历史记录列表 */
+    /** Refresh the history list after TimerPanel stop() */
     public void refreshHistory() {
         historyPanel.refresh();
     }
 
-    /** 手动补录或编辑后刷新历史和排行 */
+    /** Refresh history and rankings after manually adding or editing data */
     public void refreshAll() {
         historyPanel.refresh();
         timerPanel.refreshRanking();

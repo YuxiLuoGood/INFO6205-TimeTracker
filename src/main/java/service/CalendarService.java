@@ -50,14 +50,14 @@ public class CalendarService {
         }
     }
 
-    // 主入口 
+    // Main entrance 
 
     /**
-     * 把某天的时间汇总同步为一个 Google Calendar 全天事件
-     * 在 SwingWorker 后台线程里调用
+     * Aggregate and sync the events for a specific day into a single all-day event in Google Calendar
+     * Called in a SwingWorker background thread
      *
-     * @param summary 来自 SummaryService.getDailySummary(date)
-     * @return 成功时返回事件链接，失败时返回错误信息
+     * @param summary Retrieved from SummaryService.getDailySummary(date)
+     * @return Returns the event link on success; returns an error message on failure
      */
     public String syncDay(DailySummary summary) {
         if (calendarClient == null) return "Google Calendar not initialized.";
@@ -75,22 +75,22 @@ public class CalendarService {
     }
 
     /**
-     * 判断 CalendarService 是否初始化成功
-     * GUI 里可以用这个决定是否显示 Sync 按钮
+     * Checks whether CalendarService has initialized successfully
+     * This can be used in the GUI to determine whether to display the Sync button
      */
     public boolean isAvailable() {
         return calendarClient != null;
     }
 
-    // Event 构建
+    // Event Construct
 
     private Event buildEvent(DailySummary summary) {
         LocalDate date = summary.getDate();
 
-        // 标题
+        // title
         String title = "Time Tracker: " + date;
 
-        // 描述：列出所有项目时长
+        // Description: List the duration of all items
         StringBuilder desc = new StringBuilder();
         desc.append("Total: ").append(formatDuration(summary.getTotalDuration())).append("\n\n");
 
@@ -101,7 +101,7 @@ public class CalendarService {
                 .append(": ").append(formatDuration(dur)).append("\n");
         }
 
-        // 全天事件：start 和 end 都用 date 格式
+        // All-day events: Both start and end times must be in date format
         Date startDate = Date.from(
                 date.atStartOfDay(ZoneId.systemDefault()).toInstant());
         Date endDate   = Date.from(
@@ -119,10 +119,10 @@ public class CalendarService {
                 .setEnd(new EventDateTime().setDate(end));
     }
 
-    // OAuth 2.0 认证 
+    // OAuth 2.0 Authorize
 
     private Credential authorize(NetHttpTransport transport) throws IOException {
-        // 读取 credentials.json（从 Google Cloud Console 下载）
+        // Read credentials.json (downloaded from the Google Cloud Console)
         File credFile = new File(CREDENTIALS_FILE);
         if (!credFile.exists()) {
             throw new FileNotFoundException(
@@ -141,7 +141,8 @@ public class CalendarService {
                     .setAccessType("offline")
                     .build();
 
-            // 第一次运行会打开浏览器让用户授权，之后 token 存在 tokens/ 目录
+            // The first time it runs, it will open a browser window to prompt the user for authorization;
+            // afterward, the token is stored in the `tokens/` directory.
             LocalServerReceiver receiver = new LocalServerReceiver.Builder()
                     .setPort(8888)
                     .build();
@@ -149,7 +150,7 @@ public class CalendarService {
         }
     }
 
-    // 工具方法
+    // Tools method
 
     private String formatDuration(long totalSeconds) {
         long h = totalSeconds / 3600;

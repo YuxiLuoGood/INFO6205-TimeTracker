@@ -16,8 +16,8 @@ public class MyLinkedList<T> implements ListInterface<T> {
         }
     }
 
-    private final Node<T> head; // 哨兵头节点
-    private final Node<T> tail; // 哨兵尾节点
+    private final Node<T> head; // Sentinel Head Node
+    private final Node<T> tail; // Sentinel tail node
     private int size;
 
     public MyLinkedList() {
@@ -28,7 +28,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
         size = 0;
     }
 
-    /** 在末尾追加，O(1) */
+    /** Append at the end, O(1) */
     @Override
     public void addLast(T item) {
         Node<T> node = new Node<>(item);
@@ -39,7 +39,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
         size++;
     }
 
-    /** 删除所有满足条件的节点，返回是否至少删除了一个，O(n) */
+    /** Delete all nodes that meet the criteria and return whether at least one was deleted; O(n) */
     @Override
     public boolean removeIf(Predicate<T> condition) {
         boolean removed = false;
@@ -57,7 +57,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
         return removed;
     }
 
-    /** 更新第一个满足条件的节点，返回是否成功，O(n) */
+    /** Update the first node that meets the condition and return whether the operation was successful; O(n) */
     @Override
     public boolean editIf(Predicate<T> condition, T newItem) {
         Node<T> cur = head.next;
@@ -71,7 +71,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
         return false;
     }
 
-    /** 查找第一个满足条件的元素，找不到返回 null，O(n) */
+    /** Finds the first element that meets the condition; returns null if none is found; O(n) */
     @Override
     public T find(Predicate<T> condition) {
         Node<T> cur = head.next;
@@ -82,7 +82,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
         return null;
     }
 
-    /** 转为普通 List，供 UI 渲染，O(n) */
+    /** Convert to a regular list for UI rendering, O(n) */
     @Override
     public List<T> toList() {
         List<T> result = new ArrayList<>();

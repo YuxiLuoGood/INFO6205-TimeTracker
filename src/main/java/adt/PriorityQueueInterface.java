@@ -4,18 +4,18 @@ import java.util.NoSuchElementException;
 
 public interface PriorityQueueInterface<T> {
 
-    /** 插入元素，O(log n) */
+	/** Insert an element, O(log n) */
     void insert(T item);
 
-    /** 查看最大元素但不移除，O(1)；空时抛 NoSuchElementException */
+    /** Find the largest element without removing it; O(1); throws NoSuchElementException if the collection is empty */
     T peekMax() throws NoSuchElementException;
 
-    /** 取出最大元素并移除，O(log n)；空时抛 NoSuchElementException */
+    /** Retrieves and removes the largest element; O(log n); throws NoSuchElementException if the list is empty */
     T extractMax() throws NoSuchElementException;
 
-    /** 元素数量 */
+    /** Number of elements */
     int size();
 
-    /** 是否为空 */
+    /** Is it empty? */
     boolean isEmpty();
 }

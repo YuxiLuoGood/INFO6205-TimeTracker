@@ -8,7 +8,7 @@ import adt.MyHashTable;
 public class DailySummary {
 
     private LocalDate date;
-    private MyHashTable<String, Long> projectDurations; // 用自定义 HashTable
+    private MyHashTable<String, Long> projectDurations; // Using a custom HashTable
     private long totalDuration;
 
     public DailySummary(LocalDate date) {
@@ -30,12 +30,12 @@ public class DailySummary {
         totalDuration = Math.max(0, totalDuration - seconds);
     }
 
-    // ── Getters ──────────────────────────────────────────────
+    
 
     public LocalDate getDate()          { return date;          }
     public long getTotalDuration()      { return totalDuration; }
 
-    /** 返回所有项目名，供 AIService 遍历 */
+    /** Returns all project names for AIService to iterate through */
     public Set<String> getProjectNames() {
         return projectDurations.keySet();
     }

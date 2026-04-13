@@ -62,13 +62,13 @@ public class HistoryPanel extends JPanel {
         }
         projectFilter.addActionListener(e -> refresh());
 
-        // 日期筛选框，默认显示今天
+        // Date filter box, displays today by default
         dateFilter = new JTextField(LocalDate.now().toString(), 10);
-        dateFilter.addActionListener(e -> refresh());          // 按 Enter 刷新
+        dateFilter.addActionListener(e -> refresh());          // Press Enter to refresh
         dateFilter.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusLost(java.awt.event.FocusEvent e) {
-                refresh();                                     // 点别处自动刷新
+                refresh();                                     // Click elsewhere to refresh automatically
             }
         });
 
@@ -105,7 +105,7 @@ public class HistoryPanel extends JPanel {
                 BorderFactory.createEtchedBorder(), "History",
                 TitledBorder.LEFT, TitledBorder.TOP));
 
-        // 顶部第一行：项目过滤 + 补录
+        // Top row: Project filtering + Data entry
         JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
         row1.add(new JLabel("Project:"));
         row1.add(projectFilter);
@@ -113,7 +113,7 @@ public class HistoryPanel extends JPanel {
         manualBtn.addActionListener(e -> onManualEntry());
         row1.add(manualBtn);
 
-        // 顶部第二行：日期过滤
+        // Second row from the top: Date filter
         JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
         row2.add(new JLabel("Date:"));
         row2.add(dateFilter);
@@ -138,7 +138,7 @@ public class HistoryPanel extends JPanel {
     }
 
     public void refresh() {
-        // 刷新项目下拉
+        // Refresh the project dropdown
         String selectedFilter = (String) projectFilter.getSelectedItem();
         projectFilter.removeAllItems();
         projectFilter.addItem("All Projects");
@@ -147,20 +147,20 @@ public class HistoryPanel extends JPanel {
         }
         if (selectedFilter != null) projectFilter.setSelectedItem(selectedFilter);
 
-        // 解析日期筛选
+        // Parsing Date Filters
         String dateStr = dateFilter.getText().trim();
         LocalDate filterDate = null;
         if (!dateStr.isEmpty()) {
             try {
                 filterDate = LocalDate.parse(dateStr);
             } catch (DateTimeParseException ex) {
-                // 格式不对就忽略日期筛选
+                // If the format is incorrect, ignore the date filter
             }
         }
 
-        // 同步日期到 Calendar sync 面板
+        // Sync dates to the Calendar sync panel
         if (filterDate != null) mainWindow.syncCalendarDate(filterDate);
-        // 刷新表格
+        // Refresh table
         tableModel.setRowCount(0);
         String projectFilterStr = (String) projectFilter.getSelectedItem();
         final LocalDate fd = filterDate;

@@ -17,13 +17,13 @@ public class Project {
         this.totalDuration = 0;
     }
 
-    // ── 添加一条计时记录 ──────────────────────────────────────
+    // Add a time entry
     public void addEntry(TimeEntry entry) {
         entries.addLast(entry);
         totalDuration += entry.getDuration();
     }
 
-    // ── 删除一条计时记录（手动删除历史时用）─────────────────────
+    // Delete a time entry (for manually deleting history)
     public void removeEntry(TimeEntry entry) {
         boolean removed = entries.removeIf(e -> e == entry);
         if (removed) {
@@ -31,18 +31,18 @@ public class Project {
         }
     }
 
-    // ── Getters ──────────────────────────────────────────────
+    
     public String getName()                        { return name;          }
     public long getTotalDuration()                 { return totalDuration; }
     public ListInterface<TimeEntry> getEntries()   { return entries;       }
     public List<TimeEntry> getEntriesAsList()      { return entries.toList(); }
 
-    // ── 持久化用：直接设置总时长（JsonStorage 加载时用）──────────
+    // Persistence: Set the total duration directly (used when loading from JsonStorage)
     public void setTotalDuration(long seconds) {
         this.totalDuration = seconds;
     }
 
-    // ── 标准方法 ──────────────────────────────────────────────
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

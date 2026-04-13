@@ -15,19 +15,19 @@ public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
 
-            // 1. 从本地文件加载数据
+        	// 1. Load data from a local file
             List<Project> projects = JsonStorage.load();
 
-            // 2. 初始化所有 service
+            // 2. Initialize all services
             TimerService   timerService   = new TimerService(projects);
             SummaryService summaryService = new SummaryService(projects);
             AIService      aiService      = new AIService();
             CalendarService calendarService = new CalendarService();
 
-            // 3. 用已有数据重建 HashTable 和 PriorityQueue
+            // 3. Reconstruct a HashTable and PriorityQueue using existing data
             summaryService.rebuildFromProjects();
 
-            // 4. 启动主窗口
+            // 4. Launch the main window
             MainWindow window = new MainWindow(
                     timerService,
                     summaryService,
@@ -35,7 +35,7 @@ public class Main {
                     calendarService
             );
 
-            // 5. 关闭时自动保存数据
+            // 5. Automatically save data when closing
             window.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {

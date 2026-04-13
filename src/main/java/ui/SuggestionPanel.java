@@ -26,23 +26,42 @@ import service.AIService;
 import service.CalendarService;
 import service.SummaryService;
 
+/**
+ * SuggestionPanel is the right-hand panel of the main window.
+ * It contains two sections:
+ *
+ *   1. AI habit suggestions — retrieves the last 7 days of data from
+ *      SummaryService and sends it to Ollama for analysis. The HTTP request
+ *      runs in a SwingWorker background thread to keep the UI responsive.
+ *
+ *   2. Google Calendar sync — pushes the DailySummary for a selected date
+ *      to the user's Google Calendar as an all-day event.
+ *
+ * The Calendar date field is kept in sync with the History panel's date
+ * filter via setCalendarDate(), which is called by MainWindow.
+ */
 public class SuggestionPanel extends JPanel {
 
     private final AIService       aiService;
     private final CalendarService calendarService;
     private final SummaryService  summaryService;
 
-    // ── AI 建议控件 ───────────────────────────────────────────
+    // AI section controls
     private JTextArea suggestionArea;
     private JButton   refreshBtn;
     private JLabel    statusLabel;
 
-    // ── Calendar 同步控件 ─────────────────────────────────────
+    // Calendar section controls
     private JTextField dateField;
     private JButton    syncBtn;
     private JLabel     syncStatusLabel;
 
-    /** HistoryPanel 日期变化时调用，同步更新 Calendar 日期框 */
+    /**
+     * Called by MainWindow when the user changes the date filter in HistoryPanel.
+     * Keeps the Calendar sync date field in sync with the history view.
+     *
+     * @param date the date currently shown in HistoryPanel
+     */
     public void setCalendarDate(LocalDate date) {
         if (date != null) dateField.setText(date.toString());
     }
@@ -58,10 +77,15 @@ public class SuggestionPanel extends JPanel {
         layoutComponents();
     }
 
-    // ── 初始化控件 ────────────────────────────────────────────
+    // ── Component initialisation ──────────────────────────────
 
+    /**
+     * Creates and configures all controls for both the AI and Calendar sections.
+     * If CalendarService failed to initialise (missing credentials.json),
+     * the sync button is disabled and a status message is shown.
+     */
     private void initComponents() {
-        // AI 区域
+        // AI suggestion area — read-only, word-wrapped
         suggestionArea = new JTextArea();
         suggestionArea.setEditable(false);
         suggestionArea.setLineWrap(true);
@@ -73,16 +97,16 @@ public class SuggestionPanel extends JPanel {
         statusLabel = new JLabel(" ");
         statusLabel.setFont(new Font("SansSerif", Font.ITALIC, 11));
         statusLabel.setForeground(Color.GRAY);
-
         refreshBtn.addActionListener(e -> onGetSuggestions());
 
-        // Calendar 区域
+        // Calendar section
         dateField = new JTextField(LocalDate.now().toString(), 12);
         syncBtn   = new JButton("Sync to Google Calendar");
         syncStatusLabel = new JLabel(" ");
         syncStatusLabel.setFont(new Font("SansSerif", Font.ITALIC, 11));
         syncStatusLabel.setForeground(Color.GRAY);
 
+        // Disable sync if OAuth credentials are not available
         if (!calendarService.isAvailable()) {
             syncBtn.setEnabled(false);
             syncStatusLabel.setText("Google Calendar not configured.");
@@ -91,13 +115,17 @@ public class SuggestionPanel extends JPanel {
         syncBtn.addActionListener(e -> onSync());
     }
 
-    // ── 布局 ──────────────────────────────────────────────────
+    // ── Layout ────────────────────────────────────────────────
 
+    /**
+     * Arranges the AI panel (top, resizable) and Calendar panel (bottom, fixed height)
+     * inside a vertical JSplitPane with 75% weight given to the AI section.
+     */
     private void layoutComponents() {
         setLayout(new BorderLayout(6, 6));
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
-        // ── AI 建议区 ──────────────────────────────────────────
+        // AI suggestion section
         JPanel aiPanel = new JPanel(new BorderLayout(4, 6));
         aiPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(), "AI habit suggestions",
@@ -107,10 +135,10 @@ public class SuggestionPanel extends JPanel {
         aiTop.add(refreshBtn);
         aiTop.add(statusLabel);
 
-        aiPanel.add(aiTop,                          BorderLayout.NORTH);
+        aiPanel.add(aiTop,                           BorderLayout.NORTH);
         aiPanel.add(new JScrollPane(suggestionArea), BorderLayout.CENTER);
 
-        // ── Calendar 同步区 ────────────────────────────────────
+        // Calendar sync section
         JPanel calPanel = new JPanel(new BorderLayout(4, 6));
         calPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(), "Google Calendar sync",
@@ -122,10 +150,10 @@ public class SuggestionPanel extends JPanel {
         calForm.add(dateField);
         calForm.add(syncBtn);
 
-        calPanel.add(calForm,        BorderLayout.CENTER);
+        calPanel.add(calForm,         BorderLayout.CENTER);
         calPanel.add(syncStatusLabel, BorderLayout.SOUTH);
 
-        // ── 上下分割 ───────────────────────────────────────────
+        // Stack AI on top, Calendar below
         JSplitPane split = new JSplitPane(
                 JSplitPane.VERTICAL_SPLIT, aiPanel, calPanel);
         split.setResizeWeight(0.75);
@@ -134,15 +162,21 @@ public class SuggestionPanel extends JPanel {
         add(split, BorderLayout.CENTER);
     }
 
-    // ── 按钮事件 ──────────────────────────────────────────────
+    // ── Button actions ────────────────────────────────────────
 
+    /**
+     * Retrieves the last 7 days of DailySummary data and the sorted project list,
+     * then sends them to AIService in a background thread.
+     * The button is disabled while the request is in flight to prevent double-clicks.
+     * If no data exists yet, a prompt is shown instead of calling the API.
+     */
     private void onGetSuggestions() {
         refreshBtn.setEnabled(false);
         statusLabel.setText("Analysing...");
         suggestionArea.setText("");
 
-        List<DailySummary> recent  = summaryService.getRecentDays(7);
-        List<Project>      sorted  = summaryService.getSortedProjects();
+        List<DailySummary> recent = summaryService.getRecentDays(7);
+        List<Project>      sorted = summaryService.getSortedProjects();
 
         if (recent.isEmpty()) {
             suggestionArea.setText("No data yet. Start tracking your time first!");
@@ -151,6 +185,7 @@ public class SuggestionPanel extends JPanel {
             return;
         }
 
+        // Run the HTTP request off the Event Dispatch Thread
         new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() {
@@ -171,6 +206,13 @@ public class SuggestionPanel extends JPanel {
         }.execute();
     }
 
+    /**
+     * Validates the date input, retrieves the corresponding DailySummary
+     * from MyHashTable via SummaryService, and pushes it to Google Calendar
+     * in a background thread.
+     * Shows a red error message if the date is invalid or has no tracked data.
+     * Shows a green success message with the event link on success.
+     */
     private void onSync() {
         String input = dateField.getText().trim();
         LocalDate date;
@@ -193,6 +235,7 @@ public class SuggestionPanel extends JPanel {
         syncStatusLabel.setForeground(Color.GRAY);
         syncStatusLabel.setText("Syncing...");
 
+        // Run the Google Calendar API call off the Event Dispatch Thread
         new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() {

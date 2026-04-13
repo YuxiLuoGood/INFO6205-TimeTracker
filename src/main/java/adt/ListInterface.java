@@ -5,24 +5,24 @@ import java.util.function.Predicate;
 
 public interface ListInterface<T> {
 
-    /** 在末尾追加，O(1) */
+	/** Append at the end, O(1) */
     void addLast(T item);
 
-    /** 删除所有满足条件的节点，返回是否至少删除了一个 */
+    /** Deletes all nodes that meet the criteria and returns whether at least one node was deleted */
     boolean removeIf(Predicate<T> condition);
 
-    /** 更新第一个满足条件的节点，返回是否找到并更新 */
+    /** Update the first node that meets the criteria, and return whether it was found and updated */
     boolean editIf(Predicate<T> condition, T newItem);
 
-    /** 查找第一个满足条件的元素，找不到返回 null */
+    /** Finds the first element that meets the criteria; returns null if none is found */
     T find(Predicate<T> condition);
 
-    /** 转为普通 List，供 UI 渲染用 */
+    /** Convert to a regular List for UI rendering */
     List<T> toList();
 
-    /** 元素数量 */
+    /** Number of elements */
     int size();
 
-    /** 是否为空 */
+    /** Is it empty? */
     boolean isEmpty();
 }

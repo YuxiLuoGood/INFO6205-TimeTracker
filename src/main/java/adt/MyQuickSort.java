@@ -6,8 +6,8 @@ import java.util.List;
 public class MyQuickSort implements SortInterface {
 
     /**
-     * 对 List 原地排序，平均 O(n log n)，最坏 O(n²)
-     * 使用方式：
+     * In-place sorting of a list: average time complexity O(n log n), worst-case time complexity O(n²)
+     * Usage:
      *   MyQuickSort sorter = new MyQuickSort();
      *   sorter.sort(projects, (a, b) -> Long.compare(b.getTotalDuration(), a.getTotalDuration()));
      */
@@ -26,9 +26,9 @@ public class MyQuickSort implements SortInterface {
     }
 
     /**
-     * 分区：以最后一个元素为 pivot
-     * 把所有"小于等于 pivot"的元素移到左边，"大于 pivot"的移到右边
-     * 返回 pivot 最终所在的索引
+     * Partition: Use the last element as the pivot
+     * Move all elements “less than or equal to the pivot” to the left, and all elements “greater than the pivot” to the right
+     * Return the index where the pivot ends up
      */
     private <T> int partition(List<T> list, int low, int high, Comparator<T> comparator) {
         T pivot = list.get(high);

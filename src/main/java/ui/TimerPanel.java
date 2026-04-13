@@ -26,6 +26,20 @@ import model.Project;
 import service.SummaryService;
 import service.TimerService;
 
+/**
+ * TimerPanel is the top-left panel of the main window.
+ * It provides three areas:
+ *
+ *   1. Project controls — dropdown to select a project, text field to add
+ *      a new one, and a Remove button to delete the selected project.
+ *
+ *   2. Stopwatch — a large HH:MM:SS display updated every second by
+ *      javax.swing.Timer, with Start and Stop buttons.
+ *
+ *   3. Ranking panel — shows the Top 5 projects by total duration for a
+ *      selected date. Today's ranking uses MyHashTable via getTopNByDate;
+ *      historical dates also use MyHashTable.
+ */
 public class TimerPanel extends JPanel {
 
     private final TimerService   timerService;
@@ -40,9 +54,9 @@ public class TimerPanel extends JPanel {
     private JButton           startBtn;
     private JButton           stopBtn;
     private JPanel            rankingPanel;
-    private JTextField        rankingDateField;
+    private JTextField        rankingDateField;  // date filter for the ranking section
 
-    private javax.swing.Timer swingTimer;
+    private javax.swing.Timer swingTimer;        // fires every 1000ms to update the stopwatch
 
     public TimerPanel(TimerService timerService,
                       SummaryService summaryService,
@@ -57,6 +71,12 @@ public class TimerPanel extends JPanel {
         refreshProjectCombo();
     }
 
+    // ── Component initialisation ──────────────────────────────
+
+    /**
+     * Creates and wires up all controls.
+     * The ranking date field triggers refreshRanking() on Enter or focus loss.
+     */
     private void initComponents() {
         projectCombo    = new JComboBox<>();
         newProjectField = new JTextField(12);
@@ -86,13 +106,21 @@ public class TimerPanel extends JPanel {
         });
     }
 
+    // ── Layout ────────────────────────────────────────────────
+
+    /**
+     * Arranges the three sections vertically:
+     *   NORTH  — project selector row
+     *   CENTER — stopwatch and Start/Stop buttons
+     *   SOUTH  — ranking panel with date filter
+     */
     private void layoutComponents() {
         setLayout(new BorderLayout(6, 6));
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(), "Timer",
                 TitledBorder.LEFT, TitledBorder.TOP));
 
-        // 顶部：项目选择
+        // Top row: project selection and management
         JPanel topRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
         topRow.add(new JLabel("Project:"));
         topRow.add(projectCombo);
@@ -100,7 +128,7 @@ public class TimerPanel extends JPanel {
         topRow.add(addProjectBtn);
         topRow.add(removeProjectBtn);
 
-        // 中部：秒表 + 按钮
+        // Centre: stopwatch display and Start/Stop buttons
         JPanel centerPanel = new JPanel(new BorderLayout(4, 8));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         centerPanel.add(timerLabel, BorderLayout.CENTER);
@@ -109,7 +137,7 @@ public class TimerPanel extends JPanel {
         btnRow.add(stopBtn);
         centerPanel.add(btnRow, BorderLayout.SOUTH);
 
-        // 底部：排行榜 + 日期选择
+        // Bottom: ranking with date filter and Today shortcut
         JButton rankTodayBtn = new JButton("Today");
         rankTodayBtn.addActionListener(e -> {
             rankingDateField.setText(LocalDate.now().toString());
@@ -133,11 +161,25 @@ public class TimerPanel extends JPanel {
         add(rankingWrapper, BorderLayout.SOUTH);
     }
 
+    // ── Swing timer ───────────────────────────────────────────
+
+    /**
+     * Initialises a javax.swing.Timer that fires every 1000ms on the EDT.
+     * Each tick calls getElapsedSeconds() and updates the stopwatch label.
+     * This avoids blocking the UI thread with a sleep loop.
+     */
     private void initTimer() {
         swingTimer = new javax.swing.Timer(1000, e ->
                 timerLabel.setText(formatTime(timerService.getElapsedSeconds())));
     }
 
+    // ── Button actions ────────────────────────────────────────
+
+    /**
+     * Starts a timing session for the selected project.
+     * Disables the Start button, project dropdown, and Remove button
+     * while the timer is running to prevent conflicting actions.
+     */
     private void onStart() {
         String project = (String) projectCombo.getSelectedItem();
         if (project == null || project.isEmpty()) {
@@ -154,6 +196,14 @@ public class TimerPanel extends JPanel {
         swingTimer.start();
     }
 
+    /**
+     * Stops the current session, saves the TimeEntry, and refreshes the UI.
+     * After stopping:
+     *   - The last TimeEntry is passed to SummaryService.recordEntry() to update
+     *     MyHashTable and MyPriorityQueue.
+     *   - refreshRanking() updates the ranking panel.
+     *   - MainWindow.refreshHistory() updates the history table.
+     */
     private void onStop() {
         long duration = timerService.stop();
         swingTimer.stop();
@@ -163,6 +213,7 @@ public class TimerPanel extends JPanel {
         projectCombo.setEnabled(true);
         removeProjectBtn.setEnabled(true);
 
+        // Retrieve the TimeEntry just appended to the project's MyLinkedList
         String projectName = (String) projectCombo.getSelectedItem();
         Project project = timerService.getProjects().stream()
                 .filter(p -> p.getName().equals(projectName))
@@ -170,6 +221,7 @@ public class TimerPanel extends JPanel {
         if (project != null && duration > 0) {
             List<model.TimeEntry> entries = project.getEntriesAsList();
             if (!entries.isEmpty()) {
+                // Notify SummaryService to update HashTable and PriorityQueue
                 summaryService.recordEntry(project, entries.get(entries.size() - 1));
             }
         }
@@ -177,6 +229,11 @@ public class TimerPanel extends JPanel {
         mainWindow.refreshHistory();
     }
 
+    /**
+     * Adds a new project to the project list.
+     * Checks for duplicates before calling TimerService.addProject().
+     * Selects the new project in the dropdown after creation.
+     */
     private void onAddProject() {
         String name = newProjectField.getText().trim();
         if (name.isEmpty()) return;
@@ -192,6 +249,12 @@ public class TimerPanel extends JPanel {
         projectCombo.setSelectedItem(name);
     }
 
+    /**
+     * Removes the selected project and all its time entries after confirmation.
+     * Blocked while the timer is running to avoid data inconsistency.
+     * Calls SummaryService.rebuildRanking() to remove the deleted project
+     * from MyPriorityQueue and all DailySummary entries in MyHashTable.
+     */
     private void onRemoveProject() {
         String selected = (String) projectCombo.getSelectedItem();
         if (selected == null || selected.isEmpty()) return;
@@ -206,11 +269,17 @@ public class TimerPanel extends JPanel {
                 "Confirm remove", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
         timerService.removeProject(selected);
-        summaryService.rebuildRanking();
+        summaryService.rebuildRanking(); // sync ADTs after deletion
         refreshProjectCombo();
         mainWindow.refreshAll();
     }
 
+    // ── Refresh methods ───────────────────────────────────────
+
+    /**
+     * Repopulates the project dropdown from TimerService.
+     * Preserves the currently selected item if it still exists.
+     */
     public void refreshProjectCombo() {
         String current = (String) projectCombo.getSelectedItem();
         projectCombo.removeAllItems();
@@ -220,6 +289,12 @@ public class TimerPanel extends JPanel {
         if (current != null) projectCombo.setSelectedItem(current);
     }
 
+    /**
+     * Redraws the ranking panel for the date shown in rankingDateField.
+     * Uses SummaryService.getTopNByDate() for all dates (including today),
+     * which reads from MyHashTable to ensure consistent, accurate data.
+     * Displays "No data for this date." if no entries exist for the chosen date.
+     */
     public void refreshRanking() {
         rankingPanel.removeAll();
 
@@ -230,9 +305,8 @@ public class TimerPanel extends JPanel {
             date = LocalDate.now();
         }
 
-        List<Project> top = date.equals(LocalDate.now())
-                ? summaryService.getTopNByDate(LocalDate.now(), 5)
-                : summaryService.getTopNByDate(date, 5);
+        // Always use HashTable-backed lookup for consistent results
+        List<Project> top = summaryService.getTopNByDate(date, 5);
 
         if (top.isEmpty()) {
             rankingPanel.add(new JLabel("  No data for this date."));
@@ -267,6 +341,9 @@ public class TimerPanel extends JPanel {
         rankingPanel.repaint();
     }
 
+    // ── Formatting helpers ────────────────────────────────────
+
+    /** Formats elapsed seconds as HH:MM:SS for the stopwatch display. */
     private String formatTime(long totalSeconds) {
         long h = totalSeconds / 3600;
         long m = (totalSeconds % 3600) / 60;
@@ -274,6 +351,7 @@ public class TimerPanel extends JPanel {
         return String.format("%02d:%02d:%02d", h, m, s);
     }
 
+    /** Formats a duration in seconds as a human-readable string (e.g. "2h 30m"). */
     private String formatDuration(long totalSeconds) {
         long h = totalSeconds / 3600;
         long m = (totalSeconds % 3600) / 60;

@@ -76,7 +76,7 @@ public class MyHashTable<K, V> implements HashTableInterface<K, V> {
         return get(key) != null;
     }
 
-    /** 删除指定 key，返回是否成功，O(1) 平均 */
+    /** Deletes the specified key and returns whether the operation was successful; O(1) on average */
     @Override
     public boolean remove(K key) {
         int i = index(key);
@@ -94,7 +94,7 @@ public class MyHashTable<K, V> implements HashTableInterface<K, V> {
         return false;
     }
 
-    /** 返回所有 key 的集合，用于遍历所有日期 */
+    /** Returns a collection of all keys for iterating through all dates */
     @Override
     public Set<K> keySet() {
         Set<K> keys = new HashSet<>();
