@@ -16,6 +16,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
         }
     }
 
+
     private final Node<T> head; // Sentinel Head Node
     private final Node<T> tail; // Sentinel tail node
     private int size;
@@ -29,6 +30,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
     }
 
     /** Append at the end, O(1) */
+
     @Override
     public void addLast(T item) {
         Node<T> node = new Node<>(item);
@@ -40,6 +42,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
     }
 
     /** Delete all nodes that meet the criteria and return whether at least one was deleted; O(n) */
+
     @Override
     public boolean removeIf(Predicate<T> condition) {
         boolean removed = false;
@@ -58,6 +61,7 @@ public class MyLinkedList<T> implements ListInterface<T> {
     }
 
     /** Update the first node that meets the condition and return whether the operation was successful; O(n) */
+
     @Override
     public boolean editIf(Predicate<T> condition, T newItem) {
         Node<T> cur = head.next;
